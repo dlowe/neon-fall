@@ -174,9 +174,9 @@
         var target_a = 5000;
         var scaled_a = r2a(player.r * zoom);
         if (scaled_a < (target_a - (100 / zoom))) {
-            zoom = zoom + zoomFactor;
+            zoom = zoom * (1 + zoomFactor);
         } else if (scaled_a > (target_a + (100 / zoom))) {
-            zoom = zoom - zoomFactor;
+            zoom = zoom * (1 - zoomFactor);
         }
         var cx = (c.width / zoom / 2) - player.x;
         var cy = (80 / zoom) - (Math.max(player.y, 0));
