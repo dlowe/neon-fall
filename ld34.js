@@ -144,7 +144,7 @@
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 0.9,
+            'speed': 3.9,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
