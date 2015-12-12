@@ -13,15 +13,15 @@
         'y':           -80,
         'r':           10,
         'target_r':    10,
-        'rspeed':      0.5,
+        'rspeed':      1.0,
         'xspeed':      0,
-        'xaccel':      0.3,
-        'xdecel':      1.2,
-        'xterm':       4,
-        'xfrict':      1,
+        'xaccel':      0.6,
+        'xdecel':      2.4,
+        'xterm':       8,
+        'xfrict':      2,
         'yspeed':      0,
-        'yaccel':      0.1,
-        'yterm':       function(p) { return Math.max(8.0, p.r * 0.18) },
+        'yaccel':      0.2,
+        'yterm':       function(p) { return Math.min(48.0, Math.max(16.0, p.r * 0.36)) },
     };
     var move = function(obj) {
         if (obj.press_left) {
@@ -74,6 +74,25 @@
         return Math.sqrt(a / Math.PI);
     };
 
+    var maybe_spawn_thingy = function() {
+        if ((thingies.length < 100) && (Math.random() < 0.14)) {
+            var t = new_thingy(Math.random() * player.r * 10 + player.x - (player.r * 5),
+                        Math.random() * 100 + player.y + (c.height / zoom),
+                        Math.random() * player.r * 1.2 + 2);
+            for (var ti = 0; ti < thingies.length; ++ti) {
+                if (collides(thingies[ti], t)) {
+                    return;
+                }
+            }
+            thingies.push(t);
+        }
+    };
+    var maybe_despawn_thingies = function() {
+        thingies = thingies.filter(function(t) {
+            return (! t.gone) && (t.y > (player.y - (c.height / zoom)));
+        });
+    };
+
     var update = function() {
         if (player.target_r > player.r) {
             player.r = Math.min(player.target_r, player.r + player.rspeed);
@@ -91,6 +110,9 @@
                 thingies[ti].move(thingies[ti]);
             }
         }
+
+        maybe_despawn_thingies();
+        maybe_spawn_thingy();
     };
 
     var angle_between = function(obj1, obj2) {
@@ -122,7 +144,7 @@
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 0.9,
+            'speed': 1.8,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
@@ -133,34 +155,27 @@
         };
     };
 
-    for (var i = 0; i < 100; ++i) {
-        thingies.push(new_thingy(Math.random() * 600 - 300, Math.random() * 10000 + 100, Math.random() * 30 + 2));
-    }
-
     // rendering
     var ctx = c.getContext("2d");
     var zoom = 1;
-    var zoomFactor = 0.001;
+    var zoomFactor = 0.003;
     var render = function() {
         // clear and border (unscaled)
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#cccccc";
         ctx.fillRect(0, 0, c.width, c.height);
         ctx.beginPath();
         ctx.lineWidth = "5";
         ctx.strokeStyle = "red";
         ctx.rect(0, 0, c.width, c.height);
         ctx.stroke();
-        ctx.restore();
 
         // scale and translate before drawing everything else
         ctx.save();
         var target_a = 5000;
         var scaled_a = r2a(player.r * zoom);
-        if (scaled_a < (target_a - 100)) {
+        if (scaled_a < (target_a - (100 / zoom))) {
             zoom = zoom + zoomFactor;
-        } else if (scaled_a > (target_a + 100)) {
+        } else if (scaled_a > (target_a + (100 / zoom))) {
             zoom = zoom - zoomFactor;
         }
         var cx = (c.width / zoom / 2) - player.x;
@@ -199,18 +214,22 @@
     };
 
     // main game event loop
-    var STEP  = 1/60;
+    var STEP  = 1/30;
     var delta = 0;
     var last  = window.performance.now();
     var frame = function() {
         var now = window.performance.now();
         delta = delta = Math.min(1, (now - last) / 1000);
+        var updated = false
         while (delta > STEP) {
             delta = delta - STEP;
             update();
+            last = now;
+            updated = true;
         }
-        render();
-        last = now;
+        if (updated) {
+            render();
+        }
         requestAnimationFrame(frame);
     };
 
