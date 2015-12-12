@@ -10,16 +10,41 @@
     var press_right = false;
     var x = c.width / 2;
     var y = -80;
-    var xspeed = 3;
-    var yspeed = 4;
+    var xspeed = 0;
+    var xaccel = 0.3;
+    var xdecel = 1.2;
+    var xterm  = 4;
+    var xfrict = 1;
+    var yspeed = 0;
+    var yaccel = 0.1;
+    var yterm  = 3;
     var update = function() {
         if (press_left) {
-            x = x - xspeed;
+            if (xspeed > 0) {
+                xspeed -= xdecel;
+            } else if (xspeed >= (-xterm + xaccel)) {
+                xspeed -= xaccel;
+            } else {
+                xspeed = -xterm;
+            }
+        } else if (press_right) {
+            if (xspeed < 0) {
+                xspeed += xdecel;
+            } else if (xspeed <= (xterm - xaccel)) {
+                xspeed += xaccel;
+            } else {
+                xspeed = xterm;
+            }
+        } else {
+            if (xspeed > 0) {
+                xspeed = Math.max(0, xspeed - xfrict);
+            } else {
+                xspeed = Math.min(0, xspeed + xfrict);
+            }
         }
-        else if (press_right) {
-            x = x + xspeed;
-        }
+        x = x + xspeed;
 
+        yspeed = Math.max(yterm, yspeed + yaccel);
         y = y + yspeed;
 
         return;
@@ -33,7 +58,8 @@
         // clear and border (unscaled)
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, c.width, c.height);
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, c.width, c.height);
         ctx.beginPath();
         ctx.lineWidth = "5";
         ctx.strokeStyle = "red";
@@ -59,13 +85,13 @@
         ctx.beginPath();
         ctx.lineWidth = "4";
         ctx.strokeStyle = "blue";
-        ctx.arc(300, 100, 5, 0, 2 * Math.PI);
+        ctx.arc(300, 400, 5, 0, 2 * Math.PI);
         ctx.stroke();
 
         ctx.beginPath();
         ctx.lineWidth = "4";
         ctx.strokeStyle = "green";
-        ctx.arc(100, 100, 6, 0, 2 * Math.PI);
+        ctx.arc(100, 500, 6, 0, 2 * Math.PI);
         ctx.stroke();
 
         ctx.restore();
