@@ -6,49 +6,104 @@
     c.height = 580;
 
     // game tick
-    var press_left = false;
-    var press_right = false;
-    var x = c.width / 2;
-    var y = -80;
-    var xspeed = 0;
-    var xaccel = 0.3;
-    var xdecel = 1.2;
-    var xterm  = 4;
-    var xfrict = 1;
-    var yspeed = 0;
-    var yaccel = 0.1;
-    var yterm  = 3;
-    var update = function() {
-        if (press_left) {
-            if (xspeed > 0) {
-                xspeed -= xdecel;
-            } else if (xspeed >= (-xterm + xaccel)) {
-                xspeed -= xaccel;
+    var player = {
+        'press_left':  false,
+        'press_right': false,
+        'x':           0,
+        'y':           -80,
+        'r':           10,
+        'target_r':    10,
+        'rspeed':      0.5,
+        'xspeed':      0,
+        'xaccel':      0.3,
+        'xdecel':      1.2,
+        'xterm':       4,
+        'xfrict':      1,
+        'yspeed':      0,
+        'yaccel':      0.1,
+        'yterm':       8,
+    };
+    var move = function(obj) {
+        if (obj.press_left) {
+            if (obj.xspeed > 0) {
+                obj.xspeed -= obj.xdecel;
+            } else if (obj.xspeed >= (-obj.xterm + obj.xaccel)) {
+                obj.xspeed = obj.xspeed - obj.xaccel;
             } else {
-                xspeed = -xterm;
+                obj.xspeed = -obj.xterm;
             }
-        } else if (press_right) {
-            if (xspeed < 0) {
-                xspeed += xdecel;
-            } else if (xspeed <= (xterm - xaccel)) {
-                xspeed += xaccel;
+        } else if (obj.press_right) {
+            if (obj.xspeed < 0) {
+                obj.xspeed += obj.xdecel;
+            } else if (obj.xspeed <= (obj.xterm - obj.xaccel)) {
+                obj.xspeed = obj.xspeed + obj.xaccel;
             } else {
-                xspeed = xterm;
+                obj.xspeed = obj.xterm;
             }
         } else {
-            if (xspeed > 0) {
-                xspeed = Math.max(0, xspeed - xfrict);
+            if (obj.xspeed > 0) {
+                obj.xspeed = Math.max(0, obj.xspeed - obj.xfrict);
             } else {
-                xspeed = Math.min(0, xspeed + xfrict);
+                obj.xspeed = Math.min(0, obj.xspeed + obj.xfrict);
             }
         }
-        x = x + xspeed;
+        obj.x = obj.x + obj.xspeed;
 
-        yspeed = Math.max(yterm, yspeed + yaccel);
-        y = y + yspeed;
+        obj.yspeed = Math.min(obj.yterm, obj.yspeed + obj.yaccel);
+        obj.y = obj.y + obj.yspeed;
 
         return;
     };
+
+    var collides = function(obj1, obj2) {
+        var dx = obj2.x - obj1.x;
+        var dy = obj2.y - obj1.y;
+        var rr = obj1.r + obj2.r;
+        if ( ((dx * dx) + (dy * dy)) < (rr * rr) ) {
+            return true;
+        }
+        return false;
+    };
+
+    var thingies = [];
+
+    var r2a = function(r) {
+        return (Math.PI * r * r);
+    };
+    var a2r = function(a) {
+        return Math.sqrt(a / Math.PI);
+    };
+
+    var update = function() {
+        if (player.target_r > player.r) {
+            player.r = Math.min(player.target_r, player.r + player.rspeed);
+        } else if (player.target_r < player.r) {
+            player.r = Math.max(player.target_r, player.r - player.rspeed);
+        }
+
+        move(player);
+        for (var ti = 0; ti < thingies.length; ++ti) {
+            if (! thingies[ti].gone) {
+                if (collides(thingies[ti], player)) {
+                    thingies[ti].gone = 1;
+                    player.target_r = a2r(r2a(player.r) + r2a(thingies[ti].r));
+                }
+            }
+        }
+    };
+
+    var new_thingy = function(x, y, r) {
+        return {
+            'x': x,
+            'y': y,
+            'r': r,
+            'gone': false,
+        };
+    };
+
+    for (var i = 0; i < 300; ++i) {
+        thingies.push(new_thingy(Math.random() * 600 - 300, Math.random() * 10000 + 100, Math.random() * 30 + 2));
+    }
 
     // rendering
     var ctx = c.getContext("2d");
@@ -67,32 +122,37 @@
         ctx.stroke();
         ctx.restore();
 
-        // scale
+        // scale and translate before drawing everything else
         ctx.save();
-        var cx = (c.width / zoom / 2) - x;
-        var cy = (80 / zoom) - (Math.max(y, 0));
+        var target_a = 5000;
+        var scaled_a = r2a(player.r * zoom);
+        if (scaled_a < (target_a - 100)) {
+            zoom = zoom + zoomFactor;
+        } else if (scaled_a > (target_a + 100)) {
+            zoom = zoom - zoomFactor;
+        }
+        var cx = (c.width / zoom / 2) - player.x;
+        var cy = (80 / zoom) - (Math.max(player.y, 0));
         ctx.translate(cx * zoom, cy * zoom);
-        zoom = zoom + zoomFactor;
         ctx.scale(zoom, zoom);
 
-        // everything else is scaled
+        // the player
         ctx.beginPath();
         ctx.lineWidth = "5";
         ctx.strokeStyle = "red";
-        ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
         ctx.stroke();
 
-        ctx.beginPath();
-        ctx.lineWidth = "4";
-        ctx.strokeStyle = "blue";
-        ctx.arc(300, 400, 5, 0, 2 * Math.PI);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.lineWidth = "4";
-        ctx.strokeStyle = "green";
-        ctx.arc(100, 500, 6, 0, 2 * Math.PI);
-        ctx.stroke();
+        // the thingies
+        for (var ti = 0; ti < thingies.length; ++ti) {
+            if (! thingies[ti].gone) {
+                ctx.beginPath();
+                ctx.lineWidth = "4";
+                ctx.strokeStyle = "blue";
+                ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        }
 
         ctx.restore();
     };
@@ -117,11 +177,11 @@
         switch (e.keyCode) {
             case 37:
             case 65:
-                press_left = true;
+                player.press_left = true;
                 return false;
             case 39:
             case 68:
-                press_right = true;
+                player.press_right = true;
                 return false;
         }
     };
@@ -129,11 +189,11 @@
         switch (e.keyCode) {
             case 37:
             case 65:
-                press_left = false;
+                player.press_left = false;
                 return false;
             case 39:
             case 68:
-                press_right = false;
+                player.press_right = false;
                 return false;
         }
     };
