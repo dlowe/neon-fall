@@ -9,7 +9,7 @@
     var player = {
         'press_left':  false,
         'press_right': false,
-        'x':           0,
+        'x':           250,
         'y':           -80,
         'r':           10,
         'target_r':    10,
@@ -160,15 +160,6 @@
     var zoom = 1;
     var zoomFactor = 0.0035;
     var render = function() {
-        // clear and border (unscaled)
-        ctx.fillStyle = "#cccccc";
-        ctx.fillRect(0, 0, c.width, c.height);
-        ctx.beginPath();
-        ctx.lineWidth = "5";
-        ctx.strokeStyle = "red";
-        ctx.rect(0, 0, c.width, c.height);
-        ctx.stroke();
-
         // scale and translate before drawing everything else
         ctx.save();
         var target_a = 5000;
@@ -183,21 +174,40 @@
         ctx.translate(cx * zoom, cy * zoom);
         ctx.scale(zoom, zoom);
 
+        // the checkerboard
+        var size = 5000;
+        var cx = Math.floor(player.x / size);
+        var cy = Math.floor(player.y / size);
+        var nx = Math.floor(c.width / size / zoom) + 2;
+        var ny = Math.floor(c.height / size / zoom) + 2;
+        for (var gx = cx - nx; gx < (cx + nx); ++gx) {
+            var xodd = ((gx % 2) != 0);
+            for (var gy = cy - ny; gy < (cy + ny); ++gy) {
+                var yodd = ((gy % 2) != 0);
+                if ((xodd && yodd) || (! (xodd || yodd))) {
+                    ctx.fillStyle = "black";
+                } else {
+                    ctx.fillStyle = "white";
+                }
+                ctx.fillRect(gx * size, gy * size, size, size);
+            }
+        }
+
         // the player
         ctx.beginPath();
         ctx.lineWidth = "5";
-        ctx.strokeStyle = "red";
+        ctx.fillStyle = "red";
         ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
-        ctx.stroke();
+        ctx.fill();
 
         // the thingies
         for (var ti = 0; ti < thingies.length; ++ti) {
             if (! thingies[ti].gone) {
                 ctx.beginPath();
                 ctx.lineWidth = "4";
-                ctx.strokeStyle = "blue";
+                ctx.fillStyle = "blue";
                 ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
-                ctx.stroke();
+                ctx.fill();
 
                 // debugging thingy->player vectors
                 // ctx.beginPath();
