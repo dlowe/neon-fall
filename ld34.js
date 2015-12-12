@@ -21,7 +21,7 @@
         'xfrict':      1,
         'yspeed':      0,
         'yaccel':      0.1,
-        'yterm':       8.0,
+        'yterm':       function(p) { return Math.max(8.0, p.r * 0.18) },
     };
     var move = function(obj) {
         if (obj.press_left) {
@@ -49,7 +49,7 @@
         }
         obj.x = obj.x + obj.xspeed;
 
-        obj.yspeed = Math.min(obj.yterm, obj.yspeed + obj.yaccel);
+        obj.yspeed = Math.min(obj.yterm(obj), obj.yspeed + obj.yaccel);
         obj.y = obj.y + obj.yspeed;
 
         return;
