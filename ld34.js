@@ -21,7 +21,7 @@
         'xfrict':      1,
         'yspeed':      0,
         'yaccel':      0.1,
-        'yterm':       8,
+        'yterm':       8.0,
     };
     var move = function(obj) {
         if (obj.press_left) {
@@ -88,20 +88,52 @@
                     thingies[ti].gone = 1;
                     player.target_r = a2r(r2a(player.r) + r2a(thingies[ti].r));
                 }
+                thingies[ti].move(thingies[ti]);
             }
         }
     };
 
-    var new_thingy = function(x, y, r) {
+    var angle_between = function(obj1, obj2) {
+        return Math.atan((obj1.x - obj2.x) / (obj1.y - obj2.y));
+    };
+
+    var length_between = function(obj1, obj2) {
+        var dx = obj1.x - obj2.x;
+        var dy = obj1.y - obj2.y;
+        var l = Math.sqrt((dx * dx) + (dy * dy));
+        return (dy < 0) ? l : -l;
+    };
+
+    var destination = function(obj1, angle, length) {
+        var dx = Math.sin(angle) * length;
+        var dy = Math.cos(angle) * length;
+        var x = obj1.x + dx;
+        var y = obj1.y + dy;
+
         return {
             'x': x,
-            'y': y,
-            'r': r,
-            'gone': false,
+            'y': y
         };
     };
 
-    for (var i = 0; i < 300; ++i) {
+    var new_thingy = function(x, y, r) {
+        return {
+            'x':     x,
+            'y':     y,
+            'r':     r,
+            'gone':  false,
+            'speed': 0.9,
+            'move': function(t) {
+                var distance = -1 * length_between(t, player);
+                var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
+                t.x = dest.x;
+                t.y = dest.y;
+                return;
+            },
+        };
+    };
+
+    for (var i = 0; i < 100; ++i) {
         thingies.push(new_thingy(Math.random() * 600 - 300, Math.random() * 10000 + 100, Math.random() * 30 + 2));
     }
 
@@ -151,6 +183,15 @@
                 ctx.strokeStyle = "blue";
                 ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
                 ctx.stroke();
+
+                // debugging thingy->player vectors
+                // ctx.beginPath();
+                // ctx.lineWidth = "0.4";
+                // ctx.strokeStyle = "green";
+                // ctx.moveTo(thingies[ti].x, thingies[ti].y);
+                // var dest = destination(thingies[ti], angle_between(thingies[ti], player), length_between(thingies[ti], player));
+                // ctx.lineTo(dest.x, dest.y);
+                // ctx.stroke();
             }
         }
 
