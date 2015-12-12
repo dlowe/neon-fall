@@ -13,15 +13,15 @@
         'y':           -80,
         'r':           10,
         'target_r':    10,
-        'rspeed':      1.0,
+        'rspeed':      0.5,
         'xspeed':      0,
-        'xaccel':      0.6,
-        'xdecel':      2.4,
-        'xterm':       8,
-        'xfrict':      2,
+        'xaccel':      0.3,
+        'xdecel':      1.2,
+        'xterm':       4,
+        'xfrict':      1,
         'yspeed':      0,
-        'yaccel':      0.2,
-        'yterm':       function(p) { return Math.min(48.0, Math.max(16.0, p.r * 0.36)) },
+        'yaccel':      0.1,
+        'yterm':       function(p) { return Math.min(24.0, Math.max(8.0, p.r * 0.18)) },
     };
     var move = function(obj) {
         if (obj.press_left) {
@@ -144,7 +144,7 @@
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 1.8,
+            'speed': 0.9,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
@@ -158,7 +158,7 @@
     // rendering
     var ctx = c.getContext("2d");
     var zoom = 1;
-    var zoomFactor = 0.003;
+    var zoomFactor = 0.0035;
     var render = function() {
         // clear and border (unscaled)
         ctx.fillStyle = "#cccccc";
@@ -214,7 +214,7 @@
     };
 
     // main game event loop
-    var STEP  = 1/30;
+    var STEP  = 1/60;
     var delta = 0;
     var last  = window.performance.now();
     var frame = function() {
