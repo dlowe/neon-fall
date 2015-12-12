@@ -218,18 +218,19 @@
     var delta = 0;
     var last  = window.performance.now();
     var frame = function() {
+        // render before update, since the event is "screen is ready"!
+        render();
+
+        // update if necessary
         var now = window.performance.now();
         delta = delta = Math.min(1, (now - last) / 1000);
-        var updated = false
         while (delta > STEP) {
             delta = delta - STEP;
             update();
             last = now;
-            updated = true;
         }
-        if (updated) {
-            render();
-        }
+
+        // recur
         requestAnimationFrame(frame);
     };
 
