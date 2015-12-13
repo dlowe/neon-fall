@@ -210,11 +210,11 @@
     };
 
     var new_pellet = function(x, y, frameno) {
-        if (Math.random() > (0.85 - ramp(0, 0.45, 1800, 18000, frameno))) {
+        if (Math.random() > (0.85 - ramp(0, 0.35, 1800, 18000, frameno))) {
             return null;
         }
-        var r = Math.random() * player.r * (1.2 - ramp(0, 1.1, 120, 9000, frameno)) + 0.3;
-        var s = 0.1 + (Math.random() * ramp(0.3, 20.5, 0, 12000, frameno));
+        var r = Math.random() * player.r * (1.2 - ramp(0, 0.8, 120, 9000, frameno)) + 0.3;
+        var s = 0.1 + (Math.random() * ramp(0.3, 10.5, 0, 12000, frameno));
         return {
             'x':     x,
             'y':     y,
@@ -238,11 +238,11 @@
     };
 
     var new_pester = function(x, y, frameno) {
-        if (Math.random() > ramp(0.2, 0.5, 120, 1800, frameno)) {
+        if (Math.random() > ramp(0.25, 0.55, 180, 4800, frameno)) {
             return null;
         }
-        var r = Math.random() * player.r * ramp(0.2, 2.0, 0, 18000, frameno) + 0.3;
-        var s = 1.0 + Math.random() * ramp(3, 12, 0, 18000, frameno);
+        var r = Math.random() * player.r * ramp(0.2, 1.6, 300, 18000, frameno) + 0.3;
+        var s = 1.0 + Math.random() * ramp(3, 11, 0, 18000, frameno);
         return {
             'x':     x,
             'y':     y,
@@ -269,7 +269,7 @@
         if (Math.random() > ramp(0.1, 0.6, 0, 18000, frameno)) {
             return null;
         }
-        var r = Math.random() * player.r * ramp(0.7, 15, 0, 18000, frameno) + 0.3;
+        var r = Math.random() * player.r * ramp(0.6, 3.5, 0, 18000, frameno) + 0.3;
         var s = 0;
         return {
             'x':     x,
@@ -304,11 +304,11 @@
     };
 
     var new_killer = function(x, y, frameno) {
-        if (Math.random() > ramp(0.01, 0.25, 2700, 18000, frameno)) {
+        if (Math.random() > ramp(0.01, 0.20, 2700, 18000, frameno)) {
             return null;
         }
-        var r = Math.random() * player.r * 0.7 + 0.3;
-        var s = 4.8;
+        var r = Math.random() * player.r * 0.2 + 0.3;
+        var s = Math.random() * ramp(0, 14, 0, 18000, frameno) + 4.8;
         return {
             'x':     x,
             'y':     y,
