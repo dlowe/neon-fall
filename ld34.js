@@ -232,7 +232,7 @@
             },
             'collide': function(t, obj) {
                 t.gone = 1;
-                obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r));
+                obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r * 0.75));
             },
         };
     };
