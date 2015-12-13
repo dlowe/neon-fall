@@ -21,7 +21,7 @@
             'xfrict':      1,
             'yspeed':      0,
             'yaccel':      0.08,
-            'yterm':       function(p) { return Math.min(21.0, Math.max(7.0, p.r * 0.17)) },
+            'yterm':       function(p) { return Math.min(21.0, Math.max(6.0, p.r * 0.17)) },
         };
     };
     var player = null;
@@ -92,6 +92,8 @@
             new_thingy = new_pellet;
         } else if (Math.random() < 0.6) {
             new_thingy = new_bumper;
+        } else if (Math.random() < 0.1) {
+            new_thingy = new_killer;
         } else {
             new_thingy = new_pester;
         }
@@ -203,7 +205,7 @@
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 2.9,
+            'speed': 1.9,
             'fillStyle': "blue",
             'solid': false,
             'move': function(t) {
@@ -276,19 +278,45 @@
         };
     };
 
+    var new_killer = function(x, y, r) {
+        return {
+            'x':     x,
+            'y':     y,
+            'r':     r,
+            'gone':  false,
+            'speed': 4.8,
+            'fillStyle': "orange",
+            'solid': false,
+            'move': function(t) {
+                var distance = -1 * length_between(t, player);
+                var dest = destination(t, angle_between(t, player), (t.y > player.y) ? -t.speed : t.speed);
+                t.x = dest.x;
+                t.y = dest.y;
+                return;
+            },
+            'collide': function(t, obj) {
+                t.gone = 1;
+                obj.target_r = obj.r / 2;
+            },
+        };
+    };
+
     // rendering
     var ctx = c.getContext("2d");
     var zoom = 1;
     var zoom_factor = 0.0045;
+    var zoom_max    = 5;
     var render = function() {
         // scale and translate before drawing everything else
         ctx.save();
         var target_a = 5000;
         var scaled_a = r2a(player.r * zoom);
         if (scaled_a < (target_a - (100 / zoom))) {
-            zoom = zoom * (1 + zoom_factor);
+            zoom = Math.min(zoom_max, zoom * (1 + zoom_factor));
+            console.log(zoom);
         } else if (scaled_a > (target_a + (100 / zoom))) {
-            zoom = zoom * (1 - zoom_factor);
+            zoom = Math.min(zoom_max, zoom * (1 - zoom_factor));
+            console.log(zoom);
         }
         var cx = (c.width / zoom / 2) - player.x;
         var cy = (80 / zoom) - (Math.max(player.y, 0));
