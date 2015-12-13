@@ -5,6 +5,16 @@
     c.width = 480;
     c.height = 580;
 
+    var sounds = {
+        'spawn':            new Audio("spawn.mp3"),
+        'warning':          new Audio("warning.mp3"),
+        "game_over":        new Audio("game_over.mp3"),
+        "collision_bumper": new Audio("collision_bumper.mp3"),
+        "collision_pellet": new Audio("collision_pellet.mp3"),
+        "collision_pester": new Audio("collision_pester.mp3"),
+        "collision_killer": new Audio("collision_killer.mp3"),
+    };
+
     var new_player = function() {
         return {
             'press_left':  false,
@@ -115,13 +125,21 @@
     var dead_since_frame = -1;
     var dead_frame_limit = 180;
     var check_for_endgame = function() {
-        var dead = (player.r < 3) || (player.yspeed < 0.01);
+        var dead = (player.r < 3) || (player.yspeed < 0.08);
         if (dead) {
             if (dead_since_frame === -1) {
                 dead_since_frame = frameno;
             }
+
             if ((frameno - dead_since_frame) > dead_frame_limit) {
-                game_over = 1;
+                game_over = true;
+                sounds.game_over.load();
+                sounds.game_over.volume = 0.1;
+                sounds.game_over.play();
+            } else if (((frameno - dead_since_frame) % 30) === 29) {
+                sounds.warning.load();
+                sounds.warning.volume = 0.1;
+                sounds.warning.play();
             }
         } else {
             dead_since_frame = -1;
@@ -233,6 +251,9 @@
             'collide': function(t, obj) {
                 t.gone = 1;
                 obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r * 0.75));
+                sounds.collision_pellet.load();
+                sounds.collision_pellet.volume = 0.1;
+                sounds.collision_pellet.play();
             },
         };
     };
@@ -261,6 +282,9 @@
             'collide': function(t, obj) {
                 t.gone = 1;
                 obj.target_r = a2r(Math.max(0.3, r2a(obj.target_r) - r2a(t.r) / 2));
+                sounds.collision_pester.load();
+                sounds.collision_pester.volume = 0.1;
+                sounds.collision_pester.play();
             },
         };
     };
@@ -298,6 +322,11 @@
                 t.speed    = (t.y > obj.y ? (1) : (-1)) *
                     Math.max(0.02, (Math.abs(obj.yspeed) + Math.abs(obj.xspeed)) * Math.min(1, (r2a(obj.r) / (r2a(t.r) * 1.5))));
                 t.angle    = angle_between(obj, t);
+                if (obj.yspeed > 0.08) {
+                    sounds.collision_bumper.load();
+                    sounds.collision_bumper.volume = 0.1;
+                    sounds.collision_bumper.play();
+                }
                 obj.yspeed = 0;
             },
         };
@@ -327,6 +356,9 @@
             'collide': function(t, obj) {
                 t.gone = 1;
                 obj.target_r = obj.target_r / 2;
+                sounds.collision_killer.load();
+                sounds.collision_killer.volume = 0.1;
+                sounds.collision_killer.play();
             },
         };
     };
@@ -447,6 +479,9 @@
         thingies = [];
         zoom = 1;
         frameno = 1;
+        sounds.spawn.load();
+        sounds.spawn.volume = 0.1;
+        sounds.spawn.play();
     };
 
     var keydown = function(e) {
