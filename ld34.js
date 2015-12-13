@@ -20,40 +20,49 @@
             'xterm':       4,
             'xfrict':      1,
             'yspeed':      0,
-            'yaccel':      0.1,
+            'yaccel':      0.08,
             'yterm':       function(p) { return Math.min(21.0, Math.max(7.0, p.r * 0.17)) },
         };
     };
     var player = null;
 
     var move = function(obj) {
-        if (obj.press_left) {
-            if (obj.xspeed > 0) {
-                obj.xspeed -= obj.xdecel;
-            } else if (obj.xspeed >= (-obj.xterm + obj.xaccel)) {
-                obj.xspeed = obj.xspeed - obj.xaccel;
+        if (! collides_with_solids(obj)) {
+            if (obj.press_left) {
+                if (obj.xspeed > 0) {
+                    obj.xspeed -= obj.xdecel;
+                } else if (obj.xspeed >= (-obj.xterm + obj.xaccel)) {
+                    obj.xspeed = obj.xspeed - obj.xaccel;
+                } else {
+                    obj.xspeed = -obj.xterm;
+                }
+            } else if (obj.press_right) {
+                if (obj.xspeed < 0) {
+                    obj.xspeed += obj.xdecel;
+                } else if (obj.xspeed <= (obj.xterm - obj.xaccel)) {
+                    obj.xspeed = obj.xspeed + obj.xaccel;
+                } else {
+                    obj.xspeed = obj.xterm;
+                }
             } else {
-                obj.xspeed = -obj.xterm;
+                if (obj.xspeed > 0) {
+                    obj.xspeed = Math.max(0, obj.xspeed - obj.xfrict);
+                } else {
+                    obj.xspeed = Math.min(0, obj.xspeed + obj.xfrict);
+                }
             }
-        } else if (obj.press_right) {
-            if (obj.xspeed < 0) {
-                obj.xspeed += obj.xdecel;
-            } else if (obj.xspeed <= (obj.xterm - obj.xaccel)) {
-                obj.xspeed = obj.xspeed + obj.xaccel;
-            } else {
-                obj.xspeed = obj.xterm;
-            }
-        } else {
-            if (obj.xspeed > 0) {
-                obj.xspeed = Math.max(0, obj.xspeed - obj.xfrict);
-            } else {
-                obj.xspeed = Math.min(0, obj.xspeed + obj.xfrict);
-            }
-        }
-        obj.x = obj.x + obj.xspeed;
 
-        obj.yspeed = Math.min(obj.yterm(obj), obj.yspeed + obj.yaccel);
-        obj.y = obj.y + obj.yspeed;
+            obj.yspeed = Math.min(obj.yterm(obj), obj.yspeed + obj.yaccel);
+        } else {
+            obj.xspeed = 0;
+            obj.yspeed = 0;
+        }
+
+        var new_x = obj.x + obj.xspeed;
+        var new_y = obj.y + obj.yspeed;
+
+        obj.x = new_x;
+        obj.y = new_y;
 
         return;
     };
@@ -78,16 +87,18 @@
     };
 
     var maybe_spawn_thingy = function() {
-        var new_thingy;
-        if (Math.random() < 0.10) {
-            new_thingy = new_pester;
-        } else  {
+        var new_thingy = null;
+        if (Math.random() < 0.8) {
             new_thingy = new_pellet;
+        } else if (Math.random() < 0.6) {
+            new_thingy = new_bumper;
+        } else {
+            new_thingy = new_pester;
         }
         if ((thingies.length < 100) && (Math.random() < 0.14)) {
             var t = new_thingy(Math.random() * player.r * 10 + player.x - (player.r * 5),
                         Math.random() * 100 + player.y + (c.height / zoom),
-                        Math.random() * player.r * 0.7 + 3);
+                        Math.random() * player.r * 0.7 + 0.3);
             for (var ti = 0; ti < thingies.length; ++ti) {
                 if (collides(thingies[ti], t)) {
                     return;
@@ -169,6 +180,23 @@
         };
     };
 
+    var new_obj_at = function(obj, new_x, new_y) {
+        return {
+            'x': new_x,
+            'y': new_y,
+            'r': obj.r
+        };
+    };
+
+    var collides_with_solids = function(obj) {
+        for (var ti = 0; ti < thingies.length; ++ti) {
+            if ((thingies[ti].solid) && (collides(thingies[ti], obj))) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     var new_pellet = function(x, y, r) {
         return {
             'x':     x,
@@ -177,6 +205,7 @@
             'gone':  false,
             'speed': 2.9,
             'fillStyle': "blue",
+            'solid': false,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
@@ -190,14 +219,16 @@
             },
         };
     };
+
     var new_pester = function(x, y, r) {
         return {
             'x':     x,
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 1.6,
+            'speed': 3.6,
             'fillStyle': "yellow",
+            'solid': false,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? -t.speed : t.speed);
@@ -208,6 +239,39 @@
             'collide': function(t, obj) {
                 t.gone = 1;
                 obj.target_r = a2r(Math.max(0.3, r2a(obj.r) - r2a(t.r) / 2));
+            },
+        };
+    };
+
+    var new_bumper = function(x, y, r) {
+        return {
+            'x':     x,
+            'y':     y,
+            'r':     r,
+            'gone':  false,
+            'speed': 0.3,
+            'fillStyle': "green",
+            'angle': 0,
+            'frames': 0,
+            'solid': true,
+            'move': function(t) {
+                if (t.speed !== 0) {
+                    var dest = destination(t, t.angle, t.speed);
+                    t.x = dest.x;
+                    t.y = dest.y;
+                    if (t.speed > 0) {
+                        t.speed = Math.max(0, t.speed - 0.18);
+                    } else {
+                        t.speed = Math.min(0, t.speed + 0.18);
+                    }
+                }
+                return;
+            },
+            'collide': function(t, obj) {
+                t.speed    = (t.y > obj.y ? (1) : (-1)) *
+                    Math.max(0.02, (Math.abs(obj.yspeed) + Math.abs(obj.xspeed)) * Math.min(1, (r2a(obj.r) / (r2a(t.r) * 1.5))));
+                t.angle    = angle_between(obj, t);
+                obj.yspeed = 0;
             },
         };
     };
