@@ -5,24 +5,27 @@
     c.width = 480;
     c.height = 580;
 
-    // game tick
-    var player = {
-        'press_left':  false,
-        'press_right': false,
-        'x':           250,
-        'y':           -80,
-        'r':           10,
-        'target_r':    10,
-        'rspeed':      0.5,
-        'xspeed':      0,
-        'xaccel':      0.3,
-        'xdecel':      1.2,
-        'xterm':       4,
-        'xfrict':      1,
-        'yspeed':      0,
-        'yaccel':      0.1,
-        'yterm':       function(p) { return Math.min(24.0, Math.max(8.0, p.r * 0.18)) },
+    var new_player = function() {
+        return {
+            'press_left':  false,
+            'press_right': false,
+            'x':           250,
+            'y':           -80,
+            'r':           10,
+            'target_r':    10,
+            'rspeed':      0.5,
+            'xspeed':      0,
+            'xaccel':      0.3,
+            'xdecel':      1.2,
+            'xterm':       4,
+            'xfrict':      1,
+            'yspeed':      0,
+            'yaccel':      0.1,
+            'yterm':       function(p) { return Math.min(21.0, Math.max(7.0, p.r * 0.17)) },
+        };
     };
+    var player = null;
+
     var move = function(obj) {
         if (obj.press_left) {
             if (obj.xspeed > 0) {
@@ -75,10 +78,16 @@
     };
 
     var maybe_spawn_thingy = function() {
+        var new_thingy;
+        if (Math.random() < 0.10) {
+            new_thingy = new_pester;
+        } else  {
+            new_thingy = new_pellet;
+        }
         if ((thingies.length < 100) && (Math.random() < 0.14)) {
             var t = new_thingy(Math.random() * player.r * 10 + player.x - (player.r * 5),
                         Math.random() * 100 + player.y + (c.height / zoom),
-                        Math.random() * player.r * 1.2 + 2);
+                        Math.random() * player.r * 0.7 + 3);
             for (var ti = 0; ti < thingies.length; ++ti) {
                 if (collides(thingies[ti], t)) {
                     return;
@@ -93,7 +102,28 @@
         });
     };
 
+    var frameno = 0;
+    var game_over = false;
+
+    var dead_since_frame = -1;
+    var dead_frame_limit = 180;
+    var check_for_endgame = function() {
+        var dead = (player.r < 1) || (player.yspeed < 0.01);
+        if (dead) {
+            if (dead_since_frame === -1) {
+                dead_since_frame = frameno;
+            }
+            if ((frameno - dead_since_frame) > dead_frame_limit) {
+                game_over = 1;
+            }
+        } else {
+            dead_since_frame = -1;
+        }
+    };
+
     var update = function() {
+        ++frameno;
+
         if (player.target_r > player.r) {
             player.r = Math.min(player.target_r, player.r + player.rspeed);
         } else if (player.target_r < player.r) {
@@ -104,8 +134,7 @@
         for (var ti = 0; ti < thingies.length; ++ti) {
             if (! thingies[ti].gone) {
                 if (collides(thingies[ti], player)) {
-                    thingies[ti].gone = 1;
-                    player.target_r = a2r(r2a(player.r) + r2a(thingies[ti].r));
+                    thingies[ti].collide(thingies[ti], player);
                 }
                 thingies[ti].move(thingies[ti]);
             }
@@ -113,6 +142,8 @@
 
         maybe_despawn_thingies();
         maybe_spawn_thingy();
+
+        check_for_endgame();
     };
 
     var angle_between = function(obj1, obj2) {
@@ -138,13 +169,14 @@
         };
     };
 
-    var new_thingy = function(x, y, r) {
+    var new_pellet = function(x, y, r) {
         return {
             'x':     x,
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 3.9,
+            'speed': 2.9,
+            'fillStyle': "blue",
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
@@ -152,22 +184,47 @@
                 t.y = dest.y;
                 return;
             },
+            'collide': function(t, obj) {
+                t.gone = 1;
+                obj.target_r = a2r(r2a(obj.r) + r2a(t.r));
+            },
+        };
+    };
+    var new_pester = function(x, y, r) {
+        return {
+            'x':     x,
+            'y':     y,
+            'r':     r,
+            'gone':  false,
+            'speed': 1.6,
+            'fillStyle': "yellow",
+            'move': function(t) {
+                var distance = -1 * length_between(t, player);
+                var dest = destination(t, angle_between(t, player), (t.y > player.y) ? -t.speed : t.speed);
+                t.x = dest.x;
+                t.y = dest.y;
+                return;
+            },
+            'collide': function(t, obj) {
+                t.gone = 1;
+                obj.target_r = a2r(Math.max(0.3, r2a(obj.r) - r2a(t.r) / 2));
+            },
         };
     };
 
     // rendering
     var ctx = c.getContext("2d");
     var zoom = 1;
-    var zoomFactor = 0.0035;
+    var zoom_factor = 0.0045;
     var render = function() {
         // scale and translate before drawing everything else
         ctx.save();
         var target_a = 5000;
         var scaled_a = r2a(player.r * zoom);
         if (scaled_a < (target_a - (100 / zoom))) {
-            zoom = zoom * (1 + zoomFactor);
+            zoom = zoom * (1 + zoom_factor);
         } else if (scaled_a > (target_a + (100 / zoom))) {
-            zoom = zoom * (1 - zoomFactor);
+            zoom = zoom * (1 - zoom_factor);
         }
         var cx = (c.width / zoom / 2) - player.x;
         var cy = (80 / zoom) - (Math.max(player.y, 0));
@@ -195,7 +252,6 @@
 
         // the player
         ctx.beginPath();
-        ctx.lineWidth = "5";
         ctx.fillStyle = "red";
         ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
         ctx.fill();
@@ -204,8 +260,7 @@
         for (var ti = 0; ti < thingies.length; ++ti) {
             if (! thingies[ti].gone) {
                 ctx.beginPath();
-                ctx.lineWidth = "4";
-                ctx.fillStyle = "blue";
+                ctx.fillStyle = thingies[ti].fillStyle;
                 ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
                 ctx.fill();
 
@@ -222,6 +277,14 @@
 
         ctx.restore();
     };
+    var render_game_over = function() {
+        ctx.save();
+        ctx.font = "30px Verdana";
+        ctx.fillStyle = "#FF0000";
+        ctx.fillText("Game over :(", 30, 40);
+        ctx.fillText("(press a key to restart)", 30, 80);
+        ctx.restore();
+    };
 
     // main game event loop
     var STEP  = 1/60;
@@ -229,19 +292,32 @@
     var last  = window.performance.now();
     var frame = function() {
         // render before update, since the event is "screen is ready"!
-        render();
+        if (! game_over) {
+            render();
+        } else {
+            render_game_over();
+        }
 
         // update if necessary
-        var now = window.performance.now();
-        delta = delta = Math.min(1, (now - last) / 1000);
-        while (delta > STEP) {
-            delta = delta - STEP;
-            update();
-            last = now;
+        if (! game_over) {
+            var now = window.performance.now();
+            delta = delta = Math.min(1, (now - last) / 1000);
+            while (delta > STEP) {
+                delta = delta - STEP;
+                update();
+                last = now;
+            }
         }
 
         // recur
         requestAnimationFrame(frame);
+    };
+
+    var start_game = function() {
+        game_over = false;
+        player = new_player();
+        thingies = [];
+        zoom = 1;
     };
 
     var keydown = function(e) {
@@ -257,6 +333,9 @@
         }
     };
     var keyup = function(e) {
+        if (game_over) {
+            start_game();
+        }
         switch (e.keyCode) {
             case 37:
             case 65:
@@ -271,5 +350,6 @@
     $(document).keydown(keydown);
     $(document).keyup(keyup);
 
+    start_game();
     requestAnimationFrame(frame);
 })(document.getElementById("ld34"));
