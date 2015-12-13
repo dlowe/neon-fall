@@ -14,7 +14,7 @@
             'r':           10,
             'target_r':    10,
             'max_r':       10,
-            'rspeed':      0.05,
+            'rspeed':      0.001,
             'xspeed':      0,
             'xaccel':      0.3,
             'xdecel':      1.2,
@@ -308,7 +308,7 @@
     // rendering
     var ctx = c.getContext("2d");
     var zoom = 1;
-    var zoom_factor = 0.0045;
+    var zoom_factor = 0.0025;
     var zoom_max    = 5;
     var render = function() {
         // scale and translate before drawing everything else
@@ -326,7 +326,7 @@
         ctx.scale(zoom, zoom);
 
         // the checkerboard
-        var size = 5000;
+        var size = 1000;
         var cx = Math.floor(player.x / size);
         var cy = Math.floor(player.y / size);
         var nx = Math.floor(c.width / size / zoom) + 2;
