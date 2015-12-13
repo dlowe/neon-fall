@@ -14,7 +14,7 @@
             'r':           10,
             'target_r':    10,
             'max_r':       10,
-            'rspeed':      0.001,
+            'rspeed':      0.02,
             'xspeed':      0,
             'xaccel':      0.3,
             'xdecel':      1.2,
@@ -88,26 +88,19 @@
     };
 
     var maybe_spawn_thingy = function() {
-        var new_thingy = null;
-        if (Math.random() < 0.8) {
-            new_thingy = new_pellet;
-        } else if (Math.random() < 0.6) {
-            new_thingy = new_bumper;
-        } else if (Math.random() < 0.1) {
-            new_thingy = new_killer;
-        } else {
-            new_thingy = new_pester;
-        }
-        if ((thingies.length < 100) && (Math.random() < 0.14)) {
-            var t = new_thingy(Math.random() * player.r * 10 + player.x - (player.r * 5),
-                        Math.random() * 100 + player.y + (c.height / zoom),
-                        Math.random() * player.r * 0.7 + 0.3);
-            for (var ti = 0; ti < thingies.length; ++ti) {
-                if (collides(thingies[ti], t)) {
-                    return;
+        if (((frameno % 3) === 0) && (thingies.length < 100)) {
+            var constructors = [ new_pellet, new_bumper, new_killer, new_pester ];
+            var new_thingy = constructors[Math.floor(Math.random() * constructors.length)];
+
+            var t = new_thingy(Math.random() * player.r * 10 + player.x - (player.r * 5), Math.random() * 100 + player.y + (c.height / zoom), frameno);
+            if (t) {
+                for (var ti = 0; ti < thingies.length; ++ti) {
+                    if (collides(thingies[ti], t)) {
+                        return;
+                    }
                 }
+                thingies.push(t);
             }
-            thingies.push(t);
         }
     };
     var maybe_despawn_thingies = function() {
@@ -116,7 +109,7 @@
         });
     };
 
-    var frameno = 0;
+    var frameno = 1;
     var game_over = false;
 
     var dead_since_frame = -1;
@@ -203,13 +196,31 @@
         return false;
     };
 
-    var new_pellet = function(x, y, r) {
+    // difficulty-ramping fn
+    // given: low and high values; start/end/current frame numbers
+    // returns a value between low and high, linear distributed between start->end frames and flat (low or high) outside that range
+    var ramp = function(low, high, start, end, frameno) {
+        if (frameno <= start) {
+            return low;
+        }
+        if (frameno >= end) {
+            return high;
+        }
+        return low + (((high - low) / (end - start)) * (frameno - start));
+    };
+
+    var new_pellet = function(x, y, frameno) {
+        if (Math.random() > (0.85 - ramp(0, 0.45, 1800, 18000, frameno))) {
+            return null;
+        }
+        var r = Math.random() * player.r * (1.2 - ramp(0, 1.1, 120, 9000, frameno)) + 0.3;
+        var s = 0.1 + (Math.random() * ramp(0.3, 20.5, 0, 12000, frameno));
         return {
             'x':     x,
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 1.9,
+            'speed': s,
             'fillStyle': "blue",
             'solid': false,
             'move': function(t) {
@@ -226,13 +237,18 @@
         };
     };
 
-    var new_pester = function(x, y, r) {
+    var new_pester = function(x, y, frameno) {
+        if (Math.random() > ramp(0.2, 0.5, 120, 1800, frameno)) {
+            return null;
+        }
+        var r = Math.random() * player.r * ramp(0.2, 2.0, 0, 18000, frameno) + 0.3;
+        var s = 1.0 + Math.random() * ramp(3, 12, 0, 18000, frameno);
         return {
             'x':     x,
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 3.6,
+            'speed': s,
             'fillStyle': "yellow",
             'solid': false,
             'move': function(t) {
@@ -249,13 +265,18 @@
         };
     };
 
-    var new_bumper = function(x, y, r) {
+    var new_bumper = function(x, y, frameno) {
+        if (Math.random() > ramp(0.1, 0.6, 0, 18000, frameno)) {
+            return null;
+        }
+        var r = Math.random() * player.r * ramp(0.7, 15, 0, 18000, frameno) + 0.3;
+        var s = 0;
         return {
             'x':     x,
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 0.3,
+            'speed': s,
             'fillStyle': "green",
             'angle': 0,
             'frames': 0,
@@ -282,13 +303,18 @@
         };
     };
 
-    var new_killer = function(x, y, r) {
+    var new_killer = function(x, y, frameno) {
+        if (Math.random() > ramp(0.01, 0.25, 2700, 18000, frameno)) {
+            return null;
+        }
+        var r = Math.random() * player.r * 0.7 + 0.3;
+        var s = 4.8;
         return {
             'x':     x,
             'y':     y,
             'r':     r,
             'gone':  false,
-            'speed': 4.8,
+            'speed': s,
             'fillStyle': "orange",
             'solid': false,
             'move': function(t) {
@@ -308,18 +334,20 @@
     // rendering
     var ctx = c.getContext("2d");
     var zoom = 1;
-    var zoom_factor = 0.0025;
+    var zoom_factor = 0.005;
     var zoom_max    = 5;
+    var zoom_min    = 0.04;
     var render = function() {
         // scale and translate before drawing everything else
         ctx.save();
         var target_a = 5000;
         var scaled_a = r2a(player.r * zoom);
         if (scaled_a < (target_a - (100 / zoom))) {
-            zoom = Math.min(zoom_max, zoom * (1 + zoom_factor));
+            zoom = Math.max(zoom_min, Math.min(zoom_max, zoom * (1 + zoom_factor)));
         } else if (scaled_a > (target_a + (100 / zoom))) {
-            zoom = Math.min(zoom_max, zoom * (1 - zoom_factor));
+            zoom = Math.max(zoom_min, Math.min(zoom_max, zoom * (1 - zoom_factor)));
         }
+        console.log(zoom);
         var cx = (c.width / zoom / 2) - player.x;
         var cy = (80 / zoom) - (Math.max(player.y, 0));
         ctx.translate(cx * zoom, cy * zoom);
@@ -418,6 +446,7 @@
         player = new_player();
         thingies = [];
         zoom = 1;
+        frameno = 1;
     };
 
     var keydown = function(e) {
