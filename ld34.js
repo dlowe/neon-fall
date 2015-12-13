@@ -13,7 +13,8 @@
             'y':           -80,
             'r':           10,
             'target_r':    10,
-            'rspeed':      0.5,
+            'max_r':       10,
+            'rspeed':      0.05,
             'xspeed':      0,
             'xaccel':      0.3,
             'xdecel':      1.2,
@@ -121,7 +122,7 @@
     var dead_since_frame = -1;
     var dead_frame_limit = 180;
     var check_for_endgame = function() {
-        var dead = (player.r < 1) || (player.yspeed < 0.01);
+        var dead = (player.r < 3) || (player.yspeed < 0.01);
         if (dead) {
             if (dead_since_frame === -1) {
                 dead_since_frame = frameno;
@@ -138,9 +139,12 @@
         ++frameno;
 
         if (player.target_r > player.r) {
-            player.r = Math.min(player.target_r, player.r + player.rspeed);
+            player.r = Math.min(player.target_r, player.r * (1 + player.rspeed));
         } else if (player.target_r < player.r) {
-            player.r = Math.max(player.target_r, player.r - player.rspeed);
+            player.r = Math.max(player.target_r, player.r * (1 - player.rspeed));
+        }
+        if (player.r > player.max_r) {
+            player.max_r = player.r;
         }
 
         move(player);
@@ -217,7 +221,7 @@
             },
             'collide': function(t, obj) {
                 t.gone = 1;
-                obj.target_r = a2r(r2a(obj.r) + r2a(t.r));
+                obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r));
             },
         };
     };
@@ -240,7 +244,7 @@
             },
             'collide': function(t, obj) {
                 t.gone = 1;
-                obj.target_r = a2r(Math.max(0.3, r2a(obj.r) - r2a(t.r) / 2));
+                obj.target_r = a2r(Math.max(0.3, r2a(obj.target_r) - r2a(t.r) / 2));
             },
         };
     };
@@ -296,7 +300,7 @@
             },
             'collide': function(t, obj) {
                 t.gone = 1;
-                obj.target_r = obj.r / 2;
+                obj.target_r = obj.target_r / 2;
             },
         };
     };
@@ -313,10 +317,8 @@
         var scaled_a = r2a(player.r * zoom);
         if (scaled_a < (target_a - (100 / zoom))) {
             zoom = Math.min(zoom_max, zoom * (1 + zoom_factor));
-            console.log(zoom);
         } else if (scaled_a > (target_a + (100 / zoom))) {
             zoom = Math.min(zoom_max, zoom * (1 - zoom_factor));
-            console.log(zoom);
         }
         var cx = (c.width / zoom / 2) - player.x;
         var cy = (80 / zoom) - (Math.max(player.y, 0));
@@ -367,6 +369,12 @@
             }
         }
 
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = "30px Verdana";
+        ctx.fillStyle = "#FF0000";
+        ctx.fillText("score: " + Math.floor(Math.max(0, Math.log(player.max_r - 9) + Math.log(Math.max(0, player.y / 1000)))), 30, 40);
         ctx.restore();
     };
     var render_game_over = function() {
