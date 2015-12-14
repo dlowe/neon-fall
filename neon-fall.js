@@ -609,6 +609,12 @@
         ctx.font = "91px Impact";
         ctx.fillText("NEON FALL", 58, 131);
 
+        if (high_score > 0) {
+            ctx.font = "30px Impact";
+            ctx.fillStyle = "#772222";
+            ctx.fillText("HIGH SCORE: " + high_score, 148, 170);
+        }
+
         ctx.font = "22px Impact";
 
         ctx.save();
