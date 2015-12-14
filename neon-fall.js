@@ -1,4 +1,4 @@
-(function ld34(c) {
+(function neon_fall(c) {
     'use strict';
 
     // embed max is 900 x 600
@@ -524,9 +524,13 @@
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, c.width, c.height);
 
-        ctx.font = "82px Impact";
-        ctx.fillStyle = "#772222";
-        ctx.fillText("LD34 GAME", 22, 130);
+        ctx.font = "94px Impact";
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = "#993CF3";
+        ctx.fillText("NEON FALL", 52, 130);
+        ctx.globalAlpha = 1.0;
+        ctx.font = "91px Impact";
+        ctx.fillText("NEON FALL", 58, 131);
 
         ctx.font = "22px Impact";
 
@@ -658,4 +662,4 @@
     $(document).keypress(keypress);
 
     requestAnimationFrame(frame);
-})(document.getElementById("ld34"));
+})(document.getElementById("neon-fall"));
