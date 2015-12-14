@@ -17,9 +17,11 @@
 
     var sprites = {
         'player': new Image(),
+        'killer': new Image(),
     };
 
     sprites.player.src = 'player.png';
+    sprites.killer.src = 'killer.png';
 
     var new_player = function() {
         return {
@@ -84,7 +86,6 @@
         obj.y = new_y;
 
         obj.angle = (obj.angle + obj.spin) % 360;
-        console.log(obj.angle);
 
         return;
     };
@@ -283,10 +284,13 @@
             'gone':  false,
             'speed': s,
             'fillStyle': "yellow",
+            'angle': 0,
             'solid': false,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
-                var dest = destination(t, angle_between(t, player), (t.y > player.y) ? -t.speed : t.speed);
+                var a = angle_between(t, player);
+                t.angle = a / (Math.PI / 180);
+                var dest = destination(t, a, (t.y > player.y) ? -t.speed : t.speed);
                 t.x = dest.x;
                 t.y = dest.y;
                 return;
@@ -358,11 +362,14 @@
             'r':     r,
             'gone':  false,
             'speed': s,
-            'fillStyle': "orange",
+            'sprite': sprites.killer,
+            'angle': 0,
             'solid': false,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
-                var dest = destination(t, angle_between(t, player), (t.y > player.y) ? -t.speed : t.speed);
+                var a = angle_between(t, player);
+                t.angle = a / (Math.PI / 180);
+                var dest = destination(t, a, (t.y > player.y) ? -t.speed : t.speed);
                 t.x = dest.x;
                 t.y = dest.y;
                 return;
@@ -425,10 +432,18 @@
         // the thingies
         for (var ti = 0; ti < thingies.length; ++ti) {
             if (! thingies[ti].gone) {
-                ctx.beginPath();
-                ctx.fillStyle = thingies[ti].fillStyle;
-                ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
-                ctx.fill();
+                if (! thingies[ti].sprite) {
+                    ctx.beginPath();
+                    ctx.fillStyle = thingies[ti].fillStyle;
+                    ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
+                    ctx.fill();
+                } else {
+                    ctx.save();
+                    ctx.translate(thingies[ti].x, thingies[ti].y);
+                    ctx.rotate(thingies[ti].angle * (Math.PI / 180));
+                    ctx.drawImage(thingies[ti].sprite, -thingies[ti].r, -thingies[ti].r, 2 * thingies[ti].r, 2 * thingies[ti].r);
+                    ctx.restore();
+                }
 
                 // debugging thingy->player vectors
                 // ctx.beginPath();
