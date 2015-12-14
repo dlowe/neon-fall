@@ -19,12 +19,14 @@
         'player': new Image(),
         'pellet': new Image(),
         'pester': new Image(),
+        'bumper': new Image(),
         'killer': new Image(),
     };
 
     sprites.player.src = 'player.png';
     sprites.pellet.src = 'pellet.png';
     sprites.pester.src = 'pester.png';
+    sprites.bumper.src = 'bumper.png';
     sprites.killer.src = 'killer.png';
 
     var new_player = function() {
@@ -40,13 +42,13 @@
             'max_r':       10,
             'rspeed':      0.02,
             'xspeed':      0,
-            'xaccel':      0.3,
+            'xaccel':      0.4,
             'xdecel':      1.2,
             'xterm':       4,
             'xfrict':      1,
             'yspeed':      0,
             'yaccel':      0.08,
-            'yterm':       function(p) { return Math.min(21.0, Math.max(6.0, p.r * 0.17)) },
+            'yterm':       function(p) { return Math.min(23.0, Math.max(5.0, p.r * 0.18)) },
         };
     };
     var player = null;
@@ -247,8 +249,8 @@
         if (Math.random() > (0.85 - ramp(0, 0.35, 1800, 18000, frameno))) {
             return null;
         }
-        var r = Math.random() * player.r * (1.2 - ramp(0, 0.8, 120, 9000, frameno)) + 0.3;
-        var s = 0.1 + (Math.random() * ramp(0.3, 10.5, 0, 12000, frameno));
+        var r = Math.random() * player.r * (0.9 - ramp(0, 0.3, 120, 9000, frameno)) + 0.3;
+        var s = 0.3 + (Math.random() * ramp(0.3, 8.5, 0, 12000, frameno));
         return {
             'x':     x,
             'y':     y,
@@ -312,10 +314,10 @@
     };
 
     var new_bumper = function(x, y, frameno) {
-        if (Math.random() > ramp(0.1, 0.6, 0, 18000, frameno)) {
+        if (Math.random() > ramp(0.14, 0.64, 0, 18000, frameno)) {
             return null;
         }
-        var r = Math.random() * player.r * ramp(0.6, 3.5, 0, 18000, frameno) + 0.3;
+        var r = Math.random() * player.r * ramp(0.4, 1.3, 0, 18000, frameno) + 0.3;
         var s = 0;
         return {
             'x':     x,
@@ -323,7 +325,7 @@
             'r':     r,
             'gone':  false,
             'speed': s,
-            'fillStyle': "green",
+            'sprite': sprites.bumper,
             'angle': 0,
             'frames': 0,
             'solid': true,
@@ -437,18 +439,11 @@
         // the thingies
         for (var ti = 0; ti < thingies.length; ++ti) {
             if (! thingies[ti].gone) {
-                if (! thingies[ti].sprite) {
-                    ctx.beginPath();
-                    ctx.fillStyle = thingies[ti].fillStyle;
-                    ctx.arc(thingies[ti].x, thingies[ti].y, thingies[ti].r, 0, 2 * Math.PI);
-                    ctx.fill();
-                } else {
-                    ctx.save();
-                    ctx.translate(thingies[ti].x, thingies[ti].y);
-                    ctx.rotate(thingies[ti].angle * (Math.PI / 180));
-                    ctx.drawImage(thingies[ti].sprite, -thingies[ti].r, -thingies[ti].r, 2 * thingies[ti].r, 2 * thingies[ti].r);
-                    ctx.restore();
-                }
+                ctx.save();
+                ctx.translate(thingies[ti].x, thingies[ti].y);
+                ctx.rotate(thingies[ti].angle * (Math.PI / 180));
+                ctx.drawImage(thingies[ti].sprite, -thingies[ti].r, -thingies[ti].r, 2 * thingies[ti].r, 2 * thingies[ti].r);
+                ctx.restore();
 
                 // debugging thingy->player vectors
                 // ctx.beginPath();
