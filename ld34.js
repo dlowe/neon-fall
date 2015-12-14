@@ -15,6 +15,12 @@
         "collision_killer": new Audio("collision_killer.mp3"),
     };
 
+    var sprites = {
+        'player': new Image(),
+    };
+
+    sprites.player.src = 'player.png';
+
     var new_player = function() {
         return {
             'press_left':  false,
@@ -22,6 +28,8 @@
             'x':           250,
             'y':           -80,
             'r':           10,
+            'angle':       0,
+            'spin':        1,
             'target_r':    10,
             'max_r':       10,
             'rspeed':      0.02,
@@ -74,6 +82,9 @@
 
         obj.x = new_x;
         obj.y = new_y;
+
+        obj.angle = (obj.angle + obj.spin) % 360;
+        console.log(obj.angle);
 
         return;
     };
@@ -251,6 +262,7 @@
             'collide': function(t, obj) {
                 t.gone = 1;
                 obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r * 0.75));
+                obj.spin += Math.random() * 10 - 5;
                 sounds.collision_pellet.load();
                 sounds.collision_pellet.volume = 0.1;
                 sounds.collision_pellet.play();
@@ -285,6 +297,7 @@
                 sounds.collision_pester.load();
                 sounds.collision_pester.volume = 0.1;
                 sounds.collision_pester.play();
+                obj.spin += Math.random() * 10 - 5;
             },
         };
     };
@@ -328,6 +341,7 @@
                     sounds.collision_bumper.play();
                 }
                 obj.yspeed = 0;
+                obj.spin /= 2;
             },
         };
     };
@@ -356,6 +370,7 @@
             'collide': function(t, obj) {
                 t.gone = 1;
                 obj.target_r = obj.target_r / 2;
+                obj.spin += Math.random() * 10 - 5;
                 sounds.collision_killer.load();
                 sounds.collision_killer.volume = 0.1;
                 sounds.collision_killer.play();
@@ -379,7 +394,6 @@
         } else if (scaled_a > (target_a + (100 / zoom))) {
             zoom = Math.max(zoom_min, Math.min(zoom_max, zoom * (1 - zoom_factor)));
         }
-        console.log(zoom);
         var cx = (c.width / zoom / 2) - player.x;
         var cy = (80 / zoom) - (Math.max(player.y, 0));
         ctx.translate(cx * zoom, cy * zoom);
@@ -402,10 +416,11 @@
         }
 
         // the player
-        ctx.beginPath();
-        ctx.fillStyle = "red";
-        ctx.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
-        ctx.fill();
+        ctx.save();
+        ctx.translate(player.x, player.y)
+        ctx.rotate(player.angle * (Math.PI / 180));
+        ctx.drawImage(sprites.player, -player.r, -player.r, 2*player.r, 2*player.r);
+        ctx.restore();
 
         // the thingies
         for (var ti = 0; ti < thingies.length; ++ti) {
