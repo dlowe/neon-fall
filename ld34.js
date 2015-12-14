@@ -198,7 +198,7 @@
         maybe_despawn_thingies();
         maybe_spawn_thingy();
 
-        player.score = Math.floor(Math.max(0, Math.log(player.max_r - 9) + Math.log(Math.max(0, player.y / 1000))));
+        player.score = Math.floor(Math.max(0, Math.log((player.max_r - 9) / 7) + Math.log(Math.max(0, player.y / 500))));
 
         check_for_endgame();
     };
