@@ -8,6 +8,7 @@
     var high_score = 0;
 
     var sounds = {
+        'background':       new Audio("background.mp3"),
         'spawn':            new Audio("spawn.mp3"),
         'warning':          new Audio("warning.mp3"),
         "game_over":        new Audio("game_over.mp3"),
@@ -162,6 +163,8 @@
                     high_score = player.score;
                 }
                 game_over = true;
+                sounds.background.pause();
+
                 sounds.game_over.load();
                 sounds.game_over.volume = 0.3;
                 sounds.game_over.play();
@@ -378,7 +381,7 @@
             return null;
         }
         var r = Math.random() * player.r * 0.2 + 0.3;
-        var s = Math.random() * ramp(0, 14, 0, 18000, frameno) + 4.8;
+        var s = Math.random() * ramp(0, 12, 0, 18000, frameno) + 3.8;
         return {
             'x':     x,
             'y':     y,
@@ -538,6 +541,8 @@
             }
         }
 
+        sounds.background.playbackRate = 2.0 - ramp(0.1, 1.4, 3, 200, player.r);
+
         // recur
         requestAnimationFrame(frame);
     };
@@ -551,6 +556,11 @@
         sounds.spawn.load();
         sounds.spawn.volume = 0.3;
         sounds.spawn.play();
+
+        sounds.background.load();
+        sounds.background.volume = 0.2;
+        sounds.background.loop = true;
+        sounds.background.play();
     };
 
     var keypress = function(e) {
