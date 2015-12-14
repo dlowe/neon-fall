@@ -49,6 +49,7 @@
             'yspeed':      0,
             'yaccel':      0.08,
             'yterm':       function(p) { return Math.min(23.0, Math.max(5.0, p.r * 0.18)) },
+            'score':       0,
         };
     };
     var player = null;
@@ -140,10 +141,15 @@
     var frameno = 1;
     var game_over = false;
 
+    var too_small;
+    var too_slow;
     var dead_since_frame = -1;
     var dead_frame_limit = 180;
     var check_for_endgame = function() {
-        var dead = (player.r < 3) || (player.yspeed < 0.08);
+        too_small = player.r < 3;
+        too_slow  = player.yspeed < 0.08;
+
+        var dead = too_small || too_slow;
         if (dead) {
             if (dead_since_frame === -1) {
                 dead_since_frame = frameno;
@@ -154,10 +160,13 @@
                 sounds.game_over.load();
                 sounds.game_over.volume = 0.3;
                 sounds.game_over.play();
-            } else if (((frameno - dead_since_frame) % 30) === 29) {
-                sounds.warning.load();
-                sounds.warning.volume = 0.3;
-                sounds.warning.play();
+            } else {
+                // annoying warning klaxon!
+                if (((frameno - dead_since_frame) % 30) === 29) {
+                    sounds.warning.load();
+                    sounds.warning.volume = 0.3;
+                    sounds.warning.play();
+                }
             }
         } else {
             dead_since_frame = -1;
@@ -188,6 +197,8 @@
 
         maybe_despawn_thingies();
         maybe_spawn_thingy();
+
+        player.score = Math.floor(Math.max(0, Math.log(player.max_r - 9) + Math.log(Math.max(0, player.y / 1000))));
 
         check_for_endgame();
     };
@@ -458,18 +469,36 @@
 
         ctx.restore();
 
+        // unscaled stuff
         ctx.save();
         ctx.font = "30px Verdana";
         ctx.fillStyle = "#FF0000";
-        ctx.fillText("score: " + Math.floor(Math.max(0, Math.log(player.max_r - 9) + Math.log(Math.max(0, player.y / 1000)))), 30, 40);
+        ctx.fillText("score: " + player.score, 30, 40);
+
+        // annoying warning banners!
+        if ((dead_since_frame !== -1) && ((frameno - dead_since_frame) > 30) && (frameno % 3)) {
+            ctx.font = "140px Impact";
+            ctx.fillStyle = "#772222";
+            ctx.globalAlpha = Math.min(1.0, ((frameno - dead_since_frame) / dead_frame_limit) * 0.6);
+            if (too_slow) {
+                ctx.fillText("FASTER!", 22, 210);
+            }
+            if (too_small) {
+                ctx.fillText("BIGGER!", 17, 370);
+            }
+            ctx.globalAlpha = 1.0;
+        }
         ctx.restore();
     };
     var render_game_over = function() {
         ctx.save();
-        ctx.font = "30px Verdana";
-        ctx.fillStyle = "#FF0000";
-        ctx.fillText("Game over :(", 30, 40);
-        ctx.fillText("(press a key to restart)", 30, 80);
+        ctx.fillStyle = "#0000000";
+        ctx.fillRect(0, 0, c.width, c.height);
+
+        ctx.font = "100px Impact";
+        ctx.fillStyle = "#772222";
+        ctx.fillText("GAME OVER", 22, 210);
+        ctx.fillText("SCORE: " + player.score, 17, 370);
         ctx.restore();
     };
 
@@ -512,6 +541,9 @@
     };
 
     var keydown = function(e) {
+        if (game_over) {
+            start_game();
+        }
         switch (e.keyCode) {
             case 37:
             case 65:
@@ -524,9 +556,6 @@
         }
     };
     var keyup = function(e) {
-        if (game_over) {
-            start_game();
-        }
         switch (e.keyCode) {
             case 37:
             case 65:
