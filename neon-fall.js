@@ -111,6 +111,7 @@
     };
 
     var thingies = [];
+    var trailers = [];
 
     var r2a = function(r) {
         return (Math.PI * r * r);
@@ -138,6 +139,11 @@
     var maybe_despawn_thingies = function() {
         thingies = thingies.filter(function(t) {
             return (! t.gone) && (t.y > (player.y - (c.height / zoom)));
+        });
+    };
+    var maybe_despawn_trailers = function() {
+        trailers = trailers.filter(function(t) {
+            return (t.despawn_frame > frameno);
         });
     };
 
@@ -200,11 +206,12 @@
                 if (collides(thingies[ti], player)) {
                     thingies[ti].collide(thingies[ti], player);
                 }
-                thingies[ti].move(thingies[ti]);
+                thingies[ti].move(thingies[ti], frameno);
             }
         }
 
         maybe_despawn_thingies();
+        maybe_despawn_trailers();
         maybe_spawn_thingy();
 
         player.score = Math.floor(Math.max(0, Math.log((player.max_r - 9) / 7) + Math.log(Math.max(0, player.y / 500))));
@@ -280,7 +287,11 @@
             'sprite': sprites.pellet,
             'angle': 0,
             'solid': false,
-            'move': function(t) {
+            'move': function(t, frameno) {
+                if ((frameno % 8) === 0) {
+                    trailers.push(new_trailer(t.x, t.y, t.r * 0.8, "#4D4DFF"));
+                }
+
                 var distance = -1 * length_between(t, player);
                 var dest = destination(t, angle_between(t, player), (t.y > player.y) ? t.speed : -t.speed);
                 t.x = dest.x;
@@ -313,7 +324,11 @@
             'sprite': sprites.pester,
             'angle': 0,
             'solid': false,
-            'move': function(t) {
+            'move': function(t, frameno) {
+                if ((frameno % 4) === 0) {
+                    trailers.push(new_trailer(t.x, t.y, t.r * 0.8, "#FFFF00"));
+                }
+
                 var distance = -1 * length_between(t, player);
                 var a = angle_between(t, player);
                 t.angle = a / (Math.PI / 180);
@@ -333,6 +348,18 @@
         };
     };
 
+    var new_trailer = function(x, y, r, color) {
+        var duration = 60;
+        return {
+            'x': x,
+            'y': y,
+            'r': r,
+            'duration': duration,
+            'despawn_frame': frameno + duration,
+            'color': color,
+        };
+    };
+
     var new_bumper = function(x, y, frameno) {
         if (Math.random() > ramp(0.14, 0.64, 0, 18000, frameno)) {
             return null;
@@ -349,7 +376,7 @@
             'angle': 0,
             'frames': 0,
             'solid': true,
-            'move': function(t) {
+            'move': function(t, frameno) {
                 if (t.speed !== 0) {
                     var dest = destination(t, t.angle, t.speed);
                     t.x = dest.x;
@@ -392,7 +419,9 @@
             'sprite': sprites.killer,
             'angle': 0,
             'solid': false,
-            'move': function(t) {
+            'move': function(t, frameno) {
+                trailers.push(new_trailer(t.x, t.y, t.r * 1.8, "#FF3105"));
+
                 var distance = -1 * length_between(t, player);
                 var a = angle_between(t, player);
                 t.angle = a / (Math.PI / 180);
@@ -476,6 +505,16 @@
             }
         }
 
+        // the trailers
+        for (var ri = 0; ri < trailers.length; ++ri) {
+            ctx.fillStyle = trailers[ri].color;
+            ctx.globalAlpha = 0.2 - (0.2 * (1 - ((trailers[ri].despawn_frame - frameno) / trailers[ri].duration)));
+            ctx.beginPath();
+            ctx.arc(trailers[ri].x, trailers[ri].y, trailers[ri].r * ((trailers[ri].despawn_frame - frameno) / trailers[ri].duration), 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+
         ctx.restore();
 
         // unscaled stuff
@@ -510,7 +549,7 @@
         ctx.fillRect(0, 0, c.width, c.height);
 
         ctx.font = "82px Impact";
-        ctx.fillStyle = "#772222";
+        ctx.fillStyle = "#993CF3";
         ctx.fillText("GAME OVER", 22, 130);
         ctx.fillText("SCORE: " + player.score, 22, 280);
         if ((player.score) && (player.score === high_score)) {
@@ -612,6 +651,7 @@
         title_screen = false;
         player = new_player();
         thingies = [];
+        trailers = [];
         zoom = 1;
         frameno = 1;
         sounds.spawn.load();
