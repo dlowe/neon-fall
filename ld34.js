@@ -385,21 +385,18 @@
         ctx.translate(cx * zoom, cy * zoom);
         ctx.scale(zoom, zoom);
 
-        // the checkerboard
-        var size = 1000;
+        // the background
+        var size = 900;
         var cx = Math.floor(player.x / size);
         var cy = Math.floor(player.y / size);
         var nx = Math.floor(c.width / size / zoom) + 2;
         var ny = Math.floor(c.height / size / zoom) + 2;
         for (var gx = cx - nx; gx < (cx + nx); ++gx) {
-            var xodd = ((gx % 2) != 0);
             for (var gy = cy - ny; gy < (cy + ny); ++gy) {
-                var yodd = ((gy % 2) != 0);
-                if ((xodd && yodd) || (! (xodd || yodd))) {
-                    ctx.fillStyle = "black";
-                } else {
-                    ctx.fillStyle = "white";
-                }
+                var grd = ctx.createRadialGradient(gx * size + (size/2), gy * size + (size/2), size/2, gx * size + (size/2), gy * size + (size/2), size * 1.65);
+                grd.addColorStop(0.0, "#000000");
+                grd.addColorStop(1.0, "#FFCCCC");
+                ctx.fillStyle = grd;
                 ctx.fillRect(gx * size, gy * size, size, size);
             }
         }
