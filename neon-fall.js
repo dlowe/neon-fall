@@ -112,6 +112,7 @@
 
     var thingies = [];
     var trailers = [];
+    var flares   = [];
 
     var r2a = function(r) {
         return (Math.PI * r * r);
@@ -144,6 +145,11 @@
     var maybe_despawn_trailers = function() {
         trailers = trailers.filter(function(t) {
             return (t.despawn_frame > frameno);
+        });
+    };
+    var maybe_despawn_flares = function() {
+        flares = flares.filter(function(f) {
+            return (f.despawn_frame > frameno);
         });
     };
 
@@ -212,6 +218,7 @@
 
         maybe_despawn_thingies();
         maybe_despawn_trailers();
+        maybe_despawn_flares();
         maybe_spawn_thingy();
 
         player.score = Math.floor(Math.max(0, Math.log((player.max_r - 9) / 7) + Math.log(Math.max(0, player.y / 500))));
@@ -299,6 +306,7 @@
                 return;
             },
             'collide': function(t, obj) {
+                flares.push(new_flare(t.x, t.y, angle_between(t, obj), t.r, "#4D4DFF"));
                 t.gone = 1;
                 obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r * 0.70));
                 obj.spin += Math.random() * 10 - 5;
@@ -338,6 +346,7 @@
                 return;
             },
             'collide': function(t, obj) {
+                flares.push(new_flare(t.x, t.y, angle_between(t, obj), t.r, "#FFFF00"));
                 t.gone = 1;
                 obj.target_r = a2r(Math.max(0.3, r2a(obj.target_r) - r2a(t.r) / 2));
                 sounds.collision_pester.load();
@@ -345,6 +354,20 @@
                 sounds.collision_pester.play();
                 obj.spin += Math.random() * 10 - 5;
             },
+        };
+    };
+
+    var new_flare = function(x, y, angle, width, color) {
+        var duration = 10;
+        console.log(angle);
+        return {
+            'x': x,
+            'y': y,
+            'width': width,
+            'angle': angle,
+            'color': color,
+            'duration': duration,
+            'despawn_frame': frameno + duration,
         };
     };
 
@@ -431,6 +454,7 @@
                 return;
             },
             'collide': function(t, obj) {
+                flares.push(new_flare(t.x, t.y, angle_between(t, obj), obj.r, "#FF3105"));
                 t.gone = 1;
                 obj.target_r = obj.target_r / 2;
                 obj.spin += Math.random() * 10 - 5;
@@ -512,6 +536,21 @@
             ctx.beginPath();
             ctx.arc(trailers[ri].x, trailers[ri].y, trailers[ri].r * ((trailers[ri].despawn_frame - frameno) / trailers[ri].duration), 0, 2 * Math.PI);
             ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+
+        // the flares
+        for (var fi = 0; fi < flares.length; ++fi) {
+            ctx.strokeStyle = flares[fi].color;
+            ctx.lineWidth = flares[fi].width * ((flares[fi].despawn_frame - frameno) / flares[fi].duration);
+            ctx.globalAlpha = 0.5 - (0.5 * (1 - ((flares[fi].despawn_frame - frameno) / flares[fi].duration)));
+            for (var i = 0; i < 4; ++i) {
+                ctx.beginPath();
+                ctx.moveTo(flares[fi].x, flares[fi].y);
+                var dest = destination(flares[fi], flares[fi].angle + (i * 1.5708), 1000 / zoom);
+                ctx.lineTo(dest.x, dest.y);
+                ctx.stroke();
+            }
             ctx.globalAlpha = 1.0;
         }
 
@@ -652,6 +691,7 @@
         player = new_player();
         thingies = [];
         trailers = [];
+        flares   = [];
         zoom = 1;
         frameno = 1;
         sounds.spawn.load();
