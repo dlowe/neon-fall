@@ -294,7 +294,7 @@
             return null;
         }
         var r = Math.random() * player.r * ramp(0.2, 1.6, 300, 18000, frameno) + 0.3;
-        var s = 1.0 + Math.random() * ramp(3, 11, 0, 18000, frameno);
+        var s = 1.0 + Math.random() * ramp(3, 10, 0, 18000, frameno);
         return {
             'x':     x,
             'y':     y,
@@ -540,10 +540,13 @@
         sounds.spawn.play();
     };
 
-    var keydown = function(e) {
+    var keypress = function(e) {
         if (game_over) {
             start_game();
         }
+        return false;
+    };
+    var keydown = function(e) {
         switch (e.keyCode) {
             case 37:
             case 65:
@@ -569,6 +572,7 @@
     };
     $(document).keydown(keydown);
     $(document).keyup(keyup);
+    $(document).keypress(keypress);
 
     start_game();
     requestAnimationFrame(frame);
