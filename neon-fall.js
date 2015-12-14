@@ -359,7 +359,6 @@
 
     var new_flare = function(x, y, angle, width, color) {
         var duration = 10;
-        console.log(angle);
         return {
             'x': x,
             'y': y,
