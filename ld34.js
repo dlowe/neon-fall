@@ -5,6 +5,8 @@
     c.width = 480;
     c.height = 580;
 
+    var high_score = 0;
+
     var sounds = {
         'spawn':            new Audio("spawn.mp3"),
         'warning':          new Audio("warning.mp3"),
@@ -147,7 +149,7 @@
     var dead_frame_limit = 180;
     var check_for_endgame = function() {
         too_small = player.r < 3;
-        too_slow  = player.yspeed < 0.08;
+        too_slow  = player.yspeed < 0.17;
 
         var dead = too_small || too_slow;
         if (dead) {
@@ -156,6 +158,9 @@
             }
 
             if ((frameno - dead_since_frame) > dead_frame_limit) {
+                if (player.score > high_score) {
+                    high_score = player.score;
+                }
                 game_over = true;
                 sounds.game_over.load();
                 sounds.game_over.volume = 0.3;
@@ -471,9 +476,14 @@
 
         // unscaled stuff
         ctx.save();
-        ctx.font = "30px Verdana";
+        ctx.globalAlpha = 0.4;
         ctx.fillStyle = "#FF0000";
-        ctx.fillText("score: " + player.score, 30, 40);
+        ctx.fillRect(20, 20, c.width - 40, 24);
+        ctx.font = "20px Impact";
+        ctx.fillStyle = "#000000";
+        ctx.fillText("SCORE: " + player.score, 30, 40);
+        ctx.fillText("HIGH SCORE: " + high_score, c.width - 180, 40);
+        ctx.globalAlpha = 1.0;
 
         // annoying warning banners!
         if ((dead_since_frame !== -1) && ((frameno - dead_since_frame) > 30) && (frameno % 3)) {
@@ -495,10 +505,13 @@
         ctx.fillStyle = "#0000000";
         ctx.fillRect(0, 0, c.width, c.height);
 
-        ctx.font = "100px Impact";
+        ctx.font = "82px Impact";
         ctx.fillStyle = "#772222";
-        ctx.fillText("GAME OVER", 22, 210);
-        ctx.fillText("SCORE: " + player.score, 17, 370);
+        ctx.fillText("GAME OVER", 22, 130);
+        ctx.fillText("SCORE: " + player.score, 22, 280);
+        if ((player.score) && (player.score === high_score)) {
+            ctx.fillText("HIGH SCORE!", 22, 420);
+        }
         ctx.restore();
     };
 
