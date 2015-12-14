@@ -145,11 +145,11 @@
             if ((frameno - dead_since_frame) > dead_frame_limit) {
                 game_over = true;
                 sounds.game_over.load();
-                sounds.game_over.volume = 0.1;
+                sounds.game_over.volume = 0.3;
                 sounds.game_over.play();
             } else if (((frameno - dead_since_frame) % 30) === 29) {
                 sounds.warning.load();
-                sounds.warning.volume = 0.1;
+                sounds.warning.volume = 0.3;
                 sounds.warning.play();
             }
         } else {
@@ -264,7 +264,7 @@
                 obj.target_r = a2r(r2a(obj.target_r) + r2a(t.r * 0.75));
                 obj.spin += Math.random() * 10 - 5;
                 sounds.collision_pellet.load();
-                sounds.collision_pellet.volume = 0.1;
+                sounds.collision_pellet.volume = 0.3;
                 sounds.collision_pellet.play();
             },
         };
@@ -295,7 +295,7 @@
                 t.gone = 1;
                 obj.target_r = a2r(Math.max(0.3, r2a(obj.target_r) - r2a(t.r) / 2));
                 sounds.collision_pester.load();
-                sounds.collision_pester.volume = 0.1;
+                sounds.collision_pester.volume = 0.3;
                 sounds.collision_pester.play();
                 obj.spin += Math.random() * 10 - 5;
             },
@@ -337,7 +337,7 @@
                 t.angle    = angle_between(obj, t);
                 if (obj.yspeed > 0.08) {
                     sounds.collision_bumper.load();
-                    sounds.collision_bumper.volume = 0.1;
+                    sounds.collision_bumper.volume = 0.3;
                     sounds.collision_bumper.play();
                 }
                 obj.yspeed = 0;
@@ -372,7 +372,7 @@
                 obj.target_r = obj.target_r / 2;
                 obj.spin += Math.random() * 10 - 5;
                 sounds.collision_killer.load();
-                sounds.collision_killer.volume = 0.1;
+                sounds.collision_killer.volume = 0.3;
                 sounds.collision_killer.play();
             },
         };
@@ -492,7 +492,7 @@
         zoom = 1;
         frameno = 1;
         sounds.spawn.load();
-        sounds.spawn.volume = 0.1;
+        sounds.spawn.volume = 0.3;
         sounds.spawn.play();
     };
 
