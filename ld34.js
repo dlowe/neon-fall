@@ -143,6 +143,7 @@
 
     var frameno = 1;
     var game_over = false;
+    var title_screen = true;
 
     var too_small;
     var too_slow;
@@ -517,6 +518,61 @@
         }
         ctx.restore();
     };
+    var render_title_screen = function() {
+        ++frameno;
+        ctx.save();
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, c.width, c.height);
+
+        ctx.font = "82px Impact";
+        ctx.fillStyle = "#772222";
+        ctx.fillText("LD34 GAME", 22, 130);
+
+        ctx.font = "22px Impact";
+
+        ctx.save();
+        ctx.translate(230, 240);
+        ctx.rotate((frameno % 360) * (Math.PI / 180));
+        ctx.drawImage(sprites.player, -30, -30, 60, 60);
+        ctx.restore();
+        ctx.fillStyle = "#FF00FF";
+        ctx.fillText("PRESS <- TO GO LEFT", 25, 246);
+        ctx.fillText("PRESS -> TO GO RIGHT", 265, 246);
+
+        ctx.save();
+        ctx.translate(135, 310);
+        ctx.rotate((frameno % 360) * (Math.PI / 180));
+        ctx.drawImage(sprites.pellet, -20, -20, 40, 40);
+        ctx.restore();
+        ctx.fillStyle = "#4D4DFF";
+        ctx.fillText("MAKES YOU BIGGER", 160, 316);
+
+        ctx.save();
+        ctx.translate(135, 360);
+        ctx.rotate((frameno % 360) * (Math.PI / 180));
+        ctx.drawImage(sprites.pester, -20, -20, 40, 40);
+        ctx.restore();
+        ctx.fillStyle = "#FFFF00";
+        ctx.fillText("MAKES YOU SMALLER", 160, 366);
+
+        ctx.save();
+        ctx.translate(135, 410);
+        ctx.rotate((frameno % 360) * (Math.PI / 180));
+        ctx.drawImage(sprites.bumper, -20, -20, 40, 40);
+        ctx.restore();
+        ctx.fillStyle = "#6FFF00";
+        ctx.fillText("SLOWS YOU DOWN", 160, 416);
+
+        ctx.save();
+        ctx.translate(135, 460);
+        ctx.rotate((frameno % 360) * (Math.PI / 180));
+        ctx.drawImage(sprites.killer, -20, -20, 40, 40);
+        ctx.restore();
+        ctx.fillStyle = "#FF3105";
+        ctx.fillText("CRUSHES YOUR SOUL", 160, 466);
+
+        ctx.restore();
+    };
 
     // main game event loop
     var STEP  = 1/60;
@@ -524,14 +580,14 @@
     var last  = window.performance.now();
     var frame = function() {
         // render before update, since the event is "screen is ready"!
-        if (! game_over) {
-            render();
-        } else {
+        if (game_over) {
             render_game_over();
-        }
+        } else if (title_screen) {
+            render_title_screen();
+        } else {
+            render();
 
-        // update if necessary
-        if (! game_over) {
+            // update if necessary
             var now = window.performance.now();
             delta = delta = Math.min(1, (now - last) / 1000);
             while (delta > STEP) {
@@ -539,9 +595,9 @@
                 update();
                 last = now;
             }
-        }
 
-        sounds.background.playbackRate = 2.0 - ramp(0.1, 1.4, 3, 200, player.r);
+            sounds.background.playbackRate = 2.0 - ramp(0.1, 1.4, 3, 200, player.r);
+        }
 
         // recur
         requestAnimationFrame(frame);
@@ -549,6 +605,7 @@
 
     var start_game = function() {
         game_over = false;
+        title_screen = false;
         player = new_player();
         thingies = [];
         zoom = 1;
@@ -564,8 +621,11 @@
     };
 
     var keypress = function(e) {
-        if (game_over) {
+        if (title_screen) {
             start_game();
+        } else if (game_over) {
+            game_over = false;
+            title_screen = true;
         }
         return false;
     };
@@ -597,6 +657,5 @@
     $(document).keyup(keyup);
     $(document).keypress(keypress);
 
-    start_game();
     requestAnimationFrame(frame);
 })(document.getElementById("ld34"));
