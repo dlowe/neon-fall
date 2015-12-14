@@ -17,10 +17,14 @@
 
     var sprites = {
         'player': new Image(),
+        'pellet': new Image(),
+        'pester': new Image(),
         'killer': new Image(),
     };
 
     sprites.player.src = 'player.png';
+    sprites.pellet.src = 'pellet.png';
+    sprites.pester.src = 'pester.png';
     sprites.killer.src = 'killer.png';
 
     var new_player = function() {
@@ -251,7 +255,8 @@
             'r':     r,
             'gone':  false,
             'speed': s,
-            'fillStyle': "blue",
+            'sprite': sprites.pellet,
+            'angle': 0,
             'solid': false,
             'move': function(t) {
                 var distance = -1 * length_between(t, player);
@@ -283,7 +288,7 @@
             'r':     r,
             'gone':  false,
             'speed': s,
-            'fillStyle': "yellow",
+            'sprite': sprites.pester,
             'angle': 0,
             'solid': false,
             'move': function(t) {
