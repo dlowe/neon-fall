@@ -382,7 +382,7 @@
             return null;
         }
         var r = Math.random() * player.r * 0.2 + 0.3;
-        var s = Math.random() * ramp(0, 8, 0, 18000, frameno) + 3.8;
+        var s = Math.random() * ramp(0, 7, 0, 18000, frameno) + 3.8;
         return {
             'x':     x,
             'y':     y,
